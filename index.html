@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeFi Rent — Borrow & Lend Items with Smart Contract</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+
+<!-- ============ TOP NAV ============ -->
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="21" height="21">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        <path d="M3.3 7 12 12l8.7-5M12 22V12"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">DeFi Rent</div>
+      <div class="brand-sub">Borrow • Lend • Trust</div>
+    </div>
+  </div>
+
+  <div class="navlinks" id="navlinks">
+    <button class="navlink active" data-page="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>Home</button>
+    <button class="navlink" data-page="browse">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Browse</button>
+    <button class="navlink" data-page="myitems">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M9 3v18"/></svg>My Items</button>
+    <button class="navlink" data-page="tx">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/></svg>Transactions</button>
+    <button class="navlink" data-page="dispute">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>Dispute<span class="nav-badge" id="navDisputeBadge">0</span></button>
+    <button class="navlink" data-page="arb" id="navArb" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M6 7l-4 7h8zM18 7l-4 7h8z"/><path d="M4 7h16"/></svg>Arbitrator<span class="nav-badge" id="navArbBadge">0</span></button>
+    <button class="navlink" data-page="admin" id="navAdmin" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="11" r="2.4"/><path d="M12 13.4V16"/></svg>Admin<span class="nav-badge" id="navAdminBadge">0</span></button>
+  </div>
+
+  <div class="nav-right">
+    <div class="searchbox">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+      <input id="search" type="text" placeholder="Search for items..." autocomplete="off">
+    </div>
+    <div class="dd">
+      <button class="bell" id="bellBtn" title="การแจ้งเตือน">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="cnt" id="bellCnt">0</span>
+      </button>
+      <div class="dd-menu" id="bellMenu" style="min-width:330px;padding:0"></div>
+    </div>
+    <div class="dd">
+      <button class="role-chip" id="roleChip" title="สลับ Role (จำลองการเชื่อมต่อคนละ wallet)">
+        <span class="rdot" id="roleDot"></span><span class="rn" id="roleName">User</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="dd-menu" id="roleMenu" style="min-width:272px"></div>
+    </div>
+    <div class="dd">
+      <button class="wallet-chip" id="walletChip">
+        <div class="avatar"></div>
+        <span id="chipAddr">0x7a3f...9e2c</span>
+        <span class="dot-live"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="dd-menu" id="walletMenu">
+        <button onclick="copyAddr()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>คัดลอกที่อยู่กระเป๋า</button>
+        <button onclick="go('myitems')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M9 3v18"/></svg>สิ่งของของฉัน</button>
+        <button onclick="go('tx')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/></svg>ประวัติธุรกรรม</button>
+        <div class="dd-sep"></div>
+        <button onclick="toggleWallet()" id="ddWalletBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 17l5-5-5-5M21 12H9M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7"/></svg><span>เชื่อมต่อกระเป๋า</span></button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="shell">
+<main>
+
+<!-- ============ HOME ============ -->
+<section class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-copy">
+      <span class="pill-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        Decentralized Lending Platform
+      </span>
+      <h1>Borrow &amp; Lend Items<br>with <span class="accent">Smart Contract</span></h1>
+      <p class="th">ยืมของได้อย่างปลอดภัย โปร่งใส ด้วยเทคโนโลยี Blockchain</p>
+      <button class="btn-hero" onclick="go('browse')">เริ่มใช้งานเลย
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+    <div class="hero-art">
+      <svg viewBox="0 0 520 380" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="sleeve" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a85ff"/><stop offset="1" stop-color="#2b4fd6"/></linearGradient>
+          <linearGradient id="sleeve2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a72ff"/><stop offset="1" stop-color="#5236c4"/></linearGradient>
+          <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe3cd"/><stop offset="1" stop-color="#f7c6a6"/></linearGradient>
+          <linearGradient id="skin2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd7b9"/><stop offset="1" stop-color="#eeb68f"/></linearGradient>
+          <linearGradient id="shieldg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#86a9ff"/><stop offset="1" stop-color="#3a5fe6"/></linearGradient>
+          <linearGradient id="cubeg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#76e4ff"/><stop offset="1" stop-color="#4b7bff"/></linearGradient>
+          <linearGradient id="paperg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e2e9ff"/></linearGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="10" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+
+        <ellipse cx="260" cy="206" rx="188" ry="124" fill="none" stroke="rgba(165,185,255,.3)" stroke-width="1.4" class="spin-slow" transform="rotate(-20 260 206)"/>
+        <ellipse cx="260" cy="206" rx="214" ry="86" fill="none" stroke="rgba(195,175,255,.22)" stroke-width="1.4" class="spin-slow" transform="rotate(16 260 206)"/>
+        <circle cx="262" cy="212" r="104" fill="rgba(125,118,255,.22)" filter="url(#glow)"/>
+
+        <g transform="rotate(-14 260 206)">
+          <!-- forearms angled into a handshake -->
+          <g transform="rotate(-13 218 246)">
+            <rect x="-56" y="206" width="274" height="80" rx="30" fill="url(#sleeve)"/>
+            <rect x="150" y="206" width="68" height="80" rx="26" fill="#9dbaff" opacity=".3"/>
+          </g>
+          <g transform="rotate(13 302 140)">
+            <rect x="302" y="100" width="282" height="80" rx="30" fill="url(#sleeve2)"/>
+            <rect x="302" y="100" width="68" height="80" rx="26" fill="#a3abff" opacity=".3"/>
+          </g>
+          <!-- lower hand (palm up) -->
+          <rect x="182" y="198" width="146" height="94" rx="42" fill="url(#skin)"/>
+          <!-- upper hand (palm down) -->
+          <rect x="200" y="96" width="156" height="96" rx="42" fill="url(#skin2)"/>
+          <g fill="#f0b793">
+            <rect x="238" y="266" width="30" height="40" rx="15"/>
+            <rect x="278" y="264" width="30" height="42" rx="15"/>
+          </g>
+          <rect x="182" y="198" width="146" height="94" rx="42" fill="url(#skin)"/>
+          <g fill="rgba(215,150,112,.45)"><circle cx="232" cy="112" r="9"/><circle cx="264" cy="106" r="9"/><circle cx="296" cy="108" r="9"/><circle cx="328" cy="118" r="9"/></g>
+          <!-- gripping fingers of the lower hand over the upper hand -->
+          <g fill="url(#skin)">
+            <rect x="210" y="150" width="28" height="64" rx="14"/>
+            <rect x="244" y="142" width="28" height="72" rx="14"/>
+            <rect x="278" y="144" width="28" height="70" rx="14"/>
+            <rect x="312" y="152" width="28" height="62" rx="14"/>
+          </g>
+          <g stroke="rgba(190,130,95,.25)" stroke-width="2.6" stroke-linecap="round" fill="none">
+            <path d="M241 158v50M275 152v56M309 158v50"/>
+          </g>
+          <!-- thumb of the upper hand resting across -->
+          <rect x="186" y="188" width="120" height="40" rx="20" fill="url(#skin2)"/>
+          <path d="M196 211h98" stroke="rgba(190,130,95,.2)" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+          <ellipse cx="258" cy="238" rx="86" ry="12" fill="rgba(150,95,70,.12)"/>
+        </g>
+
+        <!-- shield -->
+        <g class="float">
+          <path d="M150 34 190 49 v28 c0 26 -24 40 -40 46 c-16 -6 -40 -20 -40 -46 V49 Z" fill="url(#shieldg)" stroke="rgba(255,255,255,.45)" stroke-width="2"/>
+          <path d="m136 78 11 11 22 -25" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <!-- document -->
+        <g class="float d1">
+          <rect x="316" y="18" width="88" height="110" rx="10" fill="url(#paperg)" transform="rotate(10 360 73)"/>
+          <g transform="rotate(10 360 73)" stroke="#9db1e8" stroke-width="5" stroke-linecap="round">
+            <path d="M332 42h54M332 58h54M332 74h36M332 90h26"/>
+          </g>
+        </g>
+        <!-- cubes -->
+        <g class="float d2">
+          <path d="M70 282 l27 -16 l27 16 v32 l-27 16 l-27 -16 Z" fill="url(#cubeg)" opacity=".9"/>
+          <path d="M70 282 l27 16 l27 -16 M97 298 v32" stroke="rgba(255,255,255,.5)" stroke-width="1.8" fill="none"/>
+        </g>
+        <g class="float">
+          <path d="M408 248 l30 -18 l30 18 v34 l-30 18 l-30 -18 Z" fill="url(#cubeg)" opacity=".82" filter="url(#glow)"/>
+          <path d="M408 248 l30 18 l30 -18 M438 266 v34" stroke="rgba(255,255,255,.55)" stroke-width="2" fill="none"/>
+        </g>
+        <g class="float d1"><path d="M268 310 l19 -11 l19 11 v21 l-19 11 l-19 -11 Z" fill="#76e4ff" opacity=".5"/></g>
+        <g fill="#d4dcff" opacity=".92">
+          <path d="M246 56 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5 Z" class="float d2"/>
+          <path d="M470 180 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4 Z" class="float"/>
+          <circle cx="76" cy="162" r="4"/><circle cx="486" cy="312" r="3.4"/><circle cx="186" cy="334" r="3"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="cats" id="cats"></div>
+
+  <div class="sec-head">
+    <div class="sec-title">
+      <div class="sec-bar"></div>
+      <div>
+        <h2>Popular Items</h2>
+        <div class="th">รายการยอดนิยม ที่มีผู้ให้ยืมมากที่สุด</div>
+      </div>
+    </div>
+    <a class="link-all" onclick="go('browse')">ดูทั้งหมด
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+    </a>
+  </div>
+
+  <div class="grid-items" id="popularGrid"></div>
+
+  <div class="bottom-row">
+    <div class="trust">
+      <div class="trust-item">
+        <div class="ti-ico ti-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <div><div class="t1">ปลอดภัยด้วย</div><div class="t2">Smart Contract</div></div>
+      </div>
+      <div class="trust-item">
+        <div class="ti-ico ti-2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2.5"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div><div class="t1">โปร่งใส ตรวจสอบได้</div><div class="t2">ทุกธุรกรรมบน Blockchain</div></div>
+      </div>
+      <div class="trust-item">
+        <div class="ti-ico ti-3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17 6.5 13 2 17l4.5 4"/><path d="m2 12 5-5 5 4 4-4 6 5-6 6-4-3-3 2"/></svg></div>
+        <div><div class="t1">เชื่อถือได้</div><div class="t2">ด้วยระบบยืนยันตัวตน</div></div>
+      </div>
+    </div>
+    <div class="cta-dark">
+      <h3>ร่วมเป็นผู้ให้ยืม</h3>
+      <p>แบ่งปันสิ่งของ สร้างสังคมที่ดีไปด้วยกัน</p>
+      <button class="btn-cta" onclick="openList()">เริ่มต้นเลย</button>
+      <svg class="cta-cubes" viewBox="0 0 200 140" fill="none">
+        <g opacity=".5" stroke="#8aa0ff" stroke-width="2">
+          <path d="M20 84l24-14 24 14v28l-24 14-24-14z"/><path d="M20 84l24 14 24-14M44 98v28"/>
+          <path d="M78 54l26-15 26 15v30l-26 15-26-15z"/><path d="M78 54l26 15 26-15M104 69v30"/>
+          <path d="M140 92l22-13 22 13v26l-22 13-22-13z"/><path d="M140 92l22 13 22-13M162 105v26"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BROWSE ============ -->
+<section class="page" id="page-browse">
+  <div class="page-head">
+    <div><h1>Browse Items</h1><p class="th">ค้นหาสิ่งของที่ต้องการยืมจากผู้ให้ยืมทั่วทั้งเครือข่าย</p></div>
+    <select class="select" id="sortSel" onchange="renderBrowse()">
+      <option value="pop">เรียง: ยอดนิยม</option>
+      <option value="low">ราคาต่ำ → สูง</option>
+      <option value="high">ราคาสูง → ต่ำ</option>
+      <option value="days">ระยะเวลายืมนานสุด</option>
+    </select>
+  </div>
+  <div class="toolbar" id="browseFilters"></div>
+  <div id="browseWrap"></div>
+</section>
+
+<!-- ============ MY ITEMS ============ -->
+<section class="page" id="page-myitems">
+  <div class="page-head">
+    <div><h1 id="myTitle">My Items</h1><p class="th" id="mySub">สิ่งของที่คุณปล่อยให้ยืม และของที่คุณกำลังยืมอยู่</p></div>
+    <button class="tbtn p" id="btnListItem" onclick="openList()" style="padding:11px 18px;font-size:13px">+ ลงทะเบียนสิ่งของ</button>
+  </div>
+  <div class="kpis" id="myKpis"></div>
+  <div class="panel" id="allItemsPanel" style="margin-bottom:18px;display:none">
+    <div class="panel-h"><h3>สิ่งของทั้งหมดในระบบ</h3><span class="tag info" id="allItemsCount">0 รายการ</span></div>
+    <div id="allItemsWrap"></div>
+  </div>
+  <div class="panel" id="lentPanel" style="margin-bottom:18px">
+    <div class="panel-h"><h3>สิ่งของที่ฉันปล่อยให้ยืม</h3><span class="tag info" id="lentCount">0 รายการ</span></div>
+    <div id="lentWrap"></div>
+  </div>
+  <div class="panel" id="histPanel" style="margin-bottom:18px">
+    <div class="panel-h"><h3>ประวัติการปล่อยให้ยืมที่ปิดแล้ว</h3><span class="tag info" id="histCount">0 รายการ</span></div>
+    <div id="histWrap"></div>
+  </div>
+  <div class="panel" id="borrowPanel" style="margin-bottom:18px">
+    <div class="panel-h"><h3>สิ่งของที่ฉันกำลังยืม</h3><span class="tag ok" id="borrowCount">0 รายการ</span></div>
+    <div id="borrowWrap"></div>
+  </div>
+  <div class="panel" id="histBorPanel">
+    <div class="panel-h"><h3>ประวัติการยืมที่ปิดแล้ว</h3><span class="tag info" id="histBorCount">0 รายการ</span></div>
+    <div id="histBorWrap"></div>
+  </div>
+</section>
+
+<!-- ============ TRANSACTIONS ============ -->
+<section class="page" id="page-tx">
+  <div class="page-head">
+    <div><h1>Transactions</h1><p class="th">ประวัติธุรกรรมทั้งหมดบน Blockchain · ตรวจสอบย้อนหลังได้</p></div>
+    <button class="tbtn g" onclick="toast('info','กำลังซิงก์ข้อมูล','ดึงบล็อกล่าสุดจากเครือข่าย...')" style="padding:11px 18px;font-size:13px">↻ รีเฟรช</button>
+  </div>
+  <div class="kpis" id="txKpis"></div>
+  <div class="panel">
+    <div class="panel-h"><h3>Transaction History</h3><div style="display:flex;gap:7px;align-items:center"><span class="tag info" id="txScope" style="display:none"></span><span class="tag ok"><i></i> Synced</span></div></div>
+    <div class="dfilter" id="txFilterBar" style="display:none"></div>
+    <div style="overflow-x:auto"><table id="txTable"></table></div>
+    <div id="txPager" class="pager"></div>
+  </div>
+</section>
+
+<!-- ============ ARBITRATOR ============ -->
+<section class="page" id="page-arb">
+  <div class="page-head">
+    <div><h1>Arbitrator</h1><p class="th">ภาพรวมของผู้พิพาท · สิทธิ์ งานค้าง ผลการตัดสิน และรายได้</p></div>
+    <button class="tbtn p" onclick="go('dispute')" style="padding:11px 18px;font-size:13px">⚖ ไปที่คิวเคส</button>
+  </div>
+  <div id="arbHero"></div>
+  <div class="kpis" id="arbKpis"></div>
+  <div class="panel" style="margin-bottom:18px">
+    <div class="panel-h"><h3>งานค้างของฉัน</h3><span class="tag pend" id="arbTodoCount">0 เคส</span></div>
+    <div id="arbTodoWrap"></div>
+  </div>
+  <div class="arb-2col">
+    <div class="panel">
+      <div class="panel-h"><h3>อัตราการตัดสินของฉัน</h3><span class="tag off">ตรวจความเอนเอียง</span></div>
+      <div id="arbBias"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><h3>กฎที่ผูกกับฉัน</h3><span class="tag off">Admin เป็นผู้กำหนด</span></div>
+      <div id="arbRules"></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-bottom:18px">
+    <div class="panel-h"><h3>ประวัติคำตัดสินของฉัน</h3><span class="tag ok" id="arbVerdictCount">0 เคส</span></div>
+    <div id="arbVerdicts"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><h3>รายได้และเงินประกัน</h3><span class="tag info">เฉพาะธุรกรรมผู้พิพาท</span></div>
+    <div style="overflow-x:auto"><table id="arbTxTable"></table></div>
+  </div>
+</section>
+
+<!-- ============ DISPUTE ============ -->
+<section class="page" id="page-dispute">
+  <div class="page-head">
+    <div><h1>Dispute Center</h1><p class="th">ศูนย์ระงับข้อพิพาท · ตัดสินโดยระบบ Arbitrator แบบกระจายศูนย์</p></div>
+    <button class="tbtn p" id="btnNewDispute" onclick="openDispute()" style="padding:11px 18px;font-size:13px">⚖ เปิดข้อพิพาทใหม่</button>
+  </div>
+  <div id="dBanner"></div>
+  <div id="arbPanel" style="margin-bottom:18px"></div>
+  <div class="kpis" id="dKpis"></div>
+  <div class="panel" id="ovPanel" style="margin-bottom:18px;display:none">
+    <div class="panel-h"><h3>ภาพรวมผู้พิพาทในระบบ</h3><span class="tag info" id="ovCount">0 คน</span></div>
+    <div id="ovWrap"></div>
+  </div>
+  <div class="panel" id="poolPanel" style="margin-bottom:18px;display:none">
+    <div class="panel-h"><h3>เคสใหม่ · รอผู้พิพาทลงรับ</h3><span class="tag pend" id="poolCount">0 เคส</span></div>
+    <div id="poolWrap"></div>
+  </div>
+  <div class="panel" id="minePanel" style="margin-bottom:18px;display:none">
+    <div class="panel-h"><h3>เคสที่คุณรับผิดชอบ</h3><span class="tag info" id="mineCount">0 เคส</span></div>
+    <div id="mineWrap"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><h3 id="dListTitle">รายการข้อพิพาททั้งหมด</h3><span class="tag off" id="dListScope">สาธารณะบนเชน</span></div>
+    <div class="dfilter" id="dFilterBar"></div>
+    <div id="disputeWrap"></div>
+  </div>
+</section>
+
+<!-- ============ ADMIN ============ -->
+<section class="page" id="page-admin">
+  <div class="page-head">
+    <div><h1>Admin Panel</h1><p class="th">ตั้งค่าแพลตฟอร์มและจัดการสิทธิ์ · เฉพาะ Contract Owner เท่านั้น</p></div>
+  </div>
+  <div id="adminBanner"></div>
+  <div class="panel" style="margin-bottom:18px">
+    <div class="panel-h"><h3>สัญญาบนเชน · RentalEscrow</h3><span class="tag off" id="chainTag">ยังไม่ได้เชื่อม</span></div>
+    <div id="chainPanel"></div>
+  </div>
+  <div class="kpis" id="adminKpis"></div>
+  <div class="panel" style="margin-bottom:18px">
+    <div class="panel-h"><h3>ตั้งค่าสัญญา</h3><span class="tag info">RentalEscrow.sol</span></div>
+    <div id="adminSettings"></div>
+  </div>
+  <div class="panel" style="margin-bottom:18px">
+    <div class="panel-h"><h3>ใบสมัครผู้พิพาท · รออนุมัติ</h3><span class="tag pend" id="appCount">0 ใบ</span></div>
+    <div id="appList"></div>
+  </div>
+  <div class="panel" style="margin-bottom:18px">
+    <div class="panel-h"><h3>คำขอถอนตัวของผู้พิพาท · รออนุมัติ</h3><span class="tag pend" id="exitCount">0 คำขอ</span></div>
+    <div id="exitList"></div>
+  </div>
+  <div class="panel" style="margin-bottom:18px">
+    <div class="panel-h"><h3>รายชื่อ Arbitrator ที่อนุมัติแล้ว</h3><span class="open-tag">เปิดรับสมัครอิสระ · Admin คัดจากใบสมัครเท่านั้น</span></div>
+    <div id="arbList"></div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="side">
+  <div class="scard">
+    <div class="wallet-head">
+      <div class="fox">
+        <svg viewBox="0 0 40 40" fill="none">
+          <path d="M34 5 22.5 13.6l2.1-5.1z" fill="#e2761b"/><path d="M6 5l11.4 8.7-2-5.1z" fill="#e4761b"/>
+          <path d="M30 27.3l-3.1 4.7 6.6 1.8 1.9-6.4zM4.6 27.4l1.9 6.4 6.6-1.8-3.1-4.7z" fill="#e4761b"/>
+          <path d="M12.8 18l-1.8 2.8 6.5.3-.2-7zM27.2 18l-4.6-4-.1 7.1 6.5-.3zM13.1 32l3.9-1.9-3.4-2.6zM23 30.1l3.9 1.9-.5-4.5z" fill="#e4761b"/>
+          <path d="M26.9 32l-3.9-1.9.3 2.5v1.1zM13.1 32l3.6 1.7v-1.1l.3-2.5z" fill="#d7c1b3"/>
+          <path d="M16.8 25.8l-3.3-1 2.3-1.1zM23.2 25.8l1-2.1 2.3 1.1z" fill="#233447"/>
+          <path d="M13.1 32l.6-4.7-3.7.1zM26.3 27.3l.6 4.7 3.1-4.6zM29 20.8l-6.5.3.6 3.4 1-2.1 2.3 1.1zM13.5 24.8l2.3-1.1 1 2.1.6-3.4-6.5-.3z" fill="#cd6116"/>
+          <path d="M11 20.8l2.7 5.3-.1-2.6zM26.4 23.5l-.1 2.6 2.7-5.3zM17.5 21.1l-.6 3.4.8 4 .2-5.3zM22.5 21.1l-.4 2.1.2 5.3.8-4z" fill="#e4751f"/>
+          <path d="M23.2 25.8l-.8 4 .6.4 3.4-2.6.1-2.6zM13.5 24.8l.1 2.6 3.4 2.6.6-.4-.8-4z" fill="#f6851b"/>
+          <path d="M23.3 33.7v-1.1l-.3-.3h-6l-.3.3v1.1l-3.6-1.7 1.3 1 2.5 1.8h6.1l2.6-1.8 1.2-1z" fill="#c0ad9e"/>
+          <path d="M23 30.1l-.6-.4h-4.8l-.6.4-.3 2.5.3-.3h6l.3.3z" fill="#161616"/>
+          <path d="M34.5 14.2L35.5 9l-1.5-4.5-11 8.1 4.2 3.6 6 1.8 1.3-1.5-.6-.4 1-.9-.8-.6 1-.7zM4.5 9l1 5.2-.6.5.9.7-.7.6.9.9-.6.4 1.3 1.5 6-1.8 4.2-3.6L6 4.5z" fill="#763d16"/>
+          <path d="M33.4 18.2l-6-1.8 1.8 2.7-2.7 5.3 3.6-.1h5.3zM12.8 16.4l-6 1.8-2 6.1h5.3l3.6.1-2.7-5.3zM22.5 21.1l.4-6.6 1.7-4.6h-8.2l1.7 4.6.4 6.6.2 2.1v5.2h4.8v-5.2z" fill="#f6851b"/>
+        </svg>
+      </div>
+      <div>
+        <div class="lbl">Your Wallet</div>
+        <div class="addr"><code id="sideAddr">0x7a3f...9e2c</code>
+          <button class="copy-btn" onclick="copyAddr()" title="คัดลอก">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          </button>
+        </div>
+        <span class="role-badge" id="sideRole"></span>
+        <div id="netChip"></div>
+      </div>
+    </div>
+    <div class="bal-row">
+      <div class="eth-ico">
+        <svg viewBox="0 0 20 32" fill="none"><path d="M10 0 0 16.6l10 5.9 10-5.9z" fill="#8a92b2"/><path d="M10 0v22.5l10-5.9z" fill="#62688f"/><path d="M10 24.4 0 18.5 10 32l10-13.5z" fill="#8a92b2"/><path d="M10 32V24.4l10-5.9z" fill="#62688f"/></svg>
+      </div>
+      <div>
+        <div class="lbl">ETH Balance</div>
+        <div class="val" id="balVal">0.240 ETH</div>
+      </div>
+    </div>
+    <button class="btn-connect" id="connectBtn" onclick="toggleWallet()">Connect Wallet</button>
+  </div>
+
+  <div class="scard">
+    <div class="scard-h">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg>
+      <h3>Quick Actions</h3>
+    </div>
+    <button class="qa" id="qaList" onclick="openList()">
+      <div class="qa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg></div>
+      <div><div class="t1">List an Item</div><div class="t2">ลงทะเบียนสิ่งของให้เช่า</div></div>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+    </button>
+    <button class="qa" id="qaBrowse" onclick="go('browse')">
+      <div class="qa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12l1 6a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/><path d="M5 11v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9"/></svg></div>
+      <div><div class="t1">Borrow an Item</div><div class="t2">เริ่มยืมสิ่งของ</div></div>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+    </button>
+    <button class="qa" id="qaDispute" onclick="openDispute()">
+      <div class="qa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M6 7l-4 7h8zM18 7l-4 7h8z"/><path d="M4 7h16"/></svg></div>
+      <div><div class="t1">Raise a Dispute</div><div class="t2">เปิดข้อพิพาท</div></div>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+    </button>
+    <button class="qa" id="qaApply" onclick="openApply()">
+      <div class="qa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M6 7l-4 7h8zM18 7l-4 7h8z"/><path d="M4 7h16"/><circle cx="12" cy="4" r="1.6"/></svg></div>
+      <div><div class="t1">Become an Arbitrator</div><div class="t2">สมัครเป็นผู้พิพาท</div></div>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+    </button>
+  </div>
+
+  <div class="scard">
+    <div class="sys-head"><h3>System Status</h3><span class="online"><i></i> Online</span></div>
+    <div class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M9 3v18"/></svg>Total Items<span class="n" id="stTotal">124</span></div>
+    <div class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12l1 6a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/><path d="M5 11v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9"/></svg>Active Borrows<span class="n" id="stActive">42</span></div>
+    <div class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><path d="M16 6.5a3 3 0 0 1 0 5.6M18.5 15c2 .8 3.5 2.3 3.5 5"/></svg>Total Transactions<span class="n" id="stTx">12,428</span></div>
+    <svg class="spark" viewBox="0 0 240 52" preserveAspectRatio="none">
+      <defs><linearGradient id="sparkg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8d7ef5" stop-opacity=".3"/><stop offset="1" stop-color="#8d7ef5" stop-opacity="0"/></linearGradient></defs>
+      <path class="area" d="M0 40 C22 36 30 26 48 28 C66 30 74 44 94 42 C112 40 120 20 140 18 C158 16 166 30 186 26 C204 22 214 10 240 8 L240 52 L0 52 Z"/>
+      <path class="line" d="M0 40 C22 36 30 26 48 28 C66 30 74 44 94 42 C112 40 120 20 140 18 C158 16 166 30 186 26 C204 22 214 10 240 8"/>
+    </svg>
+  </div>
+</aside>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div class="toasts" id="toasts"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
